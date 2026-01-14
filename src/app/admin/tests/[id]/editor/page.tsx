@@ -47,7 +47,14 @@ export default function AdminTestEditorPage({ params }: { params: Promise<{ id: 
         ]);
 
         if (partsRes.data) setParts(partsRes.data);
-        if (questionsRes.data) setQuestions(questionsRes.data);
+          if (questionsRes.data) {
+            // Map section_index from DB to sectionIndex for frontend
+            const mappedQuestions = questionsRes.data.map((q: any) => ({
+              ...q,
+              sectionIndex: q.section_index !== null ? q.section_index : undefined
+            }));
+            setQuestions(mappedQuestions);
+          }
       }
     } catch (err) {
       console.error("Error fetching test data:", err);
@@ -59,6 +66,9 @@ export default function AdminTestEditorPage({ params }: { params: Promise<{ id: 
 
   const handleSave = async (data: { parts: any[], questions: any[] }) => {
     try {
+      // Track old to new part ID mappings for question_groups
+      const partIdMap: Record<string, string> = {};
+      
       // 1. Update/Insert Parts
       for (const part of data.parts) {
         const partData = {
@@ -68,14 +78,17 @@ export default function AdminTestEditorPage({ params }: { params: Promise<{ id: 
           instructions: part.instructions,
           passage_text: part.passage_text,
           audio_url: part.audio_url,
-          order_index: part.order_index
+          order_index: part.order_index,
+          question_groups: part.question_groups || []
         };
 
         if (part.id && !part.id.toString().startsWith('temp-')) {
           await supabase.from("test_parts").update(partData).eq("id", part.id);
+          partIdMap[part.id] = part.id;
         } else {
           const { data: newPart } = await supabase.from("test_parts").insert(partData).select().single();
           if (newPart) {
+            partIdMap[part.id] = newPart.id;
             // Update temporary part IDs in questions
             data.questions = data.questions.map(q => 
               (q.part_id === part.id || q.temp_part_id === part.id) ? { ...q, part_id: newPart.id } : q
@@ -94,7 +107,9 @@ export default function AdminTestEditorPage({ params }: { params: Promise<{ id: 
           options: q.options,
           correct_answer: q.correct_answer,
           points: q.points,
-          order_index: q.order_index
+          order_index: q.order_index,
+          group_id: q.group_id || null,
+          section_index: q.sectionIndex !== undefined ? q.sectionIndex : null
         };
 
         if (q.id && !q.id.toString().startsWith('temp-')) {
@@ -112,39 +127,39 @@ export default function AdminTestEditorPage({ params }: { params: Promise<{ id: 
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-white gap-6">
-        <div className="relative">
-          <div className="h-24 w-24 rounded-full border-4 border-[#0072bc]/10 animate-pulse"></div>
-          <Loader2 className="h-12 w-12 animate-spin text-[#0072bc] absolute inset-0 m-auto" />
+    if (loading) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-screen bg-white dark:bg-[#1a1a1a] gap-6">
+          <div className="relative">
+            <div className="h-24 w-24 rounded-full border-4 border-[#0072bc]/10 animate-pulse"></div>
+            <Loader2 className="h-12 w-12 animate-spin text-[#0072bc] absolute inset-0 m-auto" />
+          </div>
+          <div className="text-center">
+            <p className="text-xl font-black tracking-tighter text-[#222] dark:text-white">OPENING VISUAL EDITOR</p>
+            <p className="text-[#666] dark:text-gray-400 text-xs font-bold uppercase tracking-widest mt-1">Applying IDP Standard Theme...</p>
+          </div>
         </div>
-        <div className="text-center">
-          <p className="text-xl font-black tracking-tighter text-[#222]">OPENING VISUAL EDITOR</p>
-          <p className="text-[#666] text-xs font-bold uppercase tracking-widest mt-1">Applying IDP Standard Theme...</p>
-        </div>
-      </div>
-    );
-  }
+      );
+    }
 
   const activeSection = sections.find(s => s.id === activeSectionId);
   
   // Dashboard / Module Selection View
   if (!activeSectionId) {
     return (
-      <div className="fixed inset-0 bg-[#f8f9fa] flex flex-col font-hind-siliguri">
-        <header className="h-16 bg-white border-b flex items-center justify-between px-8 shadow-sm">
+      <div className="fixed inset-0 bg-[#f8f9fa] dark:bg-[#1a1a1a] flex flex-col font-hind-siliguri">
+        <header className="h-16 bg-white dark:bg-[#222] border-b dark:border-[#333] flex items-center justify-between px-8 shadow-sm">
           <div className="flex items-center gap-4">
             <h1 className="text-3xl font-black text-[#DC2626]">IELTS</h1>
-            <div className="h-8 w-px bg-gray-200" />
+            <div className="h-8 w-px bg-gray-200 dark:bg-[#444]" />
             <div className="flex flex-col">
               <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Visual Test Editor</span>
-              <span className="text-lg font-black text-[#222] truncate max-w-[300px]">{test?.title}</span>
+              <span className="text-lg font-black text-[#222] dark:text-white truncate max-w-[300px]">{test?.title}</span>
             </div>
           </div>
           <button 
             onClick={() => router.push(`/admin/tests/${testId}`)}
-            className="flex items-center gap-2 px-6 h-10 bg-white border border-gray-200 rounded-xl text-sm font-black hover:bg-gray-50 transition-all shadow-sm"
+            className="flex items-center gap-2 px-6 h-10 bg-white dark:bg-[#333] border border-gray-200 dark:border-[#444] rounded-xl text-sm font-black hover:bg-gray-50 dark:hover:bg-[#444] transition-all shadow-sm dark:text-white"
           >
             EXIT EDITOR
           </button>
@@ -153,7 +168,7 @@ export default function AdminTestEditorPage({ params }: { params: Promise<{ id: 
         <main className="flex-1 overflow-auto p-8">
           <div className="max-w-6xl mx-auto">
             <div className="flex flex-col mb-12">
-              <h2 className="text-4xl font-black text-[#222] tracking-tighter">Test Modules</h2>
+              <h2 className="text-4xl font-black text-[#222] dark:text-white tracking-tighter">Test Modules</h2>
               <p className="text-muted-foreground font-bold text-sm uppercase tracking-widest mt-2">Select a module to begin visual editing</p>
             </div>
 
@@ -172,12 +187,12 @@ export default function AdminTestEditorPage({ params }: { params: Promise<{ id: 
                       key={s.id}
                       onClick={() => setActiveSectionId(s.id)}
                       className={cn(
-                        "group bg-white p-8 rounded-[2rem] border-2 border-transparent shadow-xl hover:shadow-2xl transition-all duration-500 text-left relative overflow-hidden flex flex-col items-start",
+                        "group bg-white dark:bg-[#222] p-8 rounded-[2rem] border-2 border-transparent shadow-xl hover:shadow-2xl transition-all duration-500 text-left relative overflow-hidden flex flex-col items-start",
                         isBlue ? "hover:border-[#0072bc]" : isRed ? "hover:border-[#DC2626]" : "hover:border-[#7c3aed]"
                       )}
                     >
                       <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <span className="text-6xl font-black uppercase">{s.section_type[0]}</span>
+                        <span className="text-6xl font-black uppercase dark:text-white">{s.section_type[0]}</span>
                       </div>
                       
                       <div className={cn(
@@ -194,7 +209,7 @@ export default function AdminTestEditorPage({ params }: { params: Promise<{ id: 
                       </div>
 
                       <h3 className={cn(
-                        "text-2xl font-black uppercase tracking-tight mb-2 transition-colors",
+                        "text-2xl font-black uppercase tracking-tight mb-2 transition-colors dark:text-white",
                         isBlue ? "group-hover:text-[#0072bc]" : isRed ? "group-hover:text-[#DC2626]" : "group-hover:text-[#7c3aed]"
                       )}>{s.section_type}</h3>
                       
@@ -209,7 +224,7 @@ export default function AdminTestEditorPage({ params }: { params: Promise<{ id: 
                         </div>
                       </div>
 
-                      <div className="absolute bottom-6 right-6 h-10 w-10 rounded-full bg-gray-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0 shadow-lg border border-gray-100">
+                      <div className="absolute bottom-6 right-6 h-10 w-10 rounded-full bg-gray-50 dark:bg-[#333] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0 shadow-lg border border-gray-100 dark:border-[#444]">
                         <ArrowRight size={18} className={isBlue ? "text-[#0072bc]" : isRed ? "text-[#DC2626]" : "text-[#7c3aed]"} />
                       </div>
                     </button>

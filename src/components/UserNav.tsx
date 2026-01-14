@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -16,55 +16,84 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, LogOut, Settings, LayoutDashboard, Shield } from "lucide-react";
 
+const userCache = {
+  user: null as any,
+  role: null as string | null,
+  loaded: false,
+  listeners: new Set<() => void>(),
+};
+
 export function UserNav({ isMobileMenu = false }: { isMobileMenu?: boolean }) {
-  const [user, setUser] = useState<any>(null);
-  const [role, setRole] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>(userCache.user);
+  const [role, setRole] = useState<string | null>(userCache.role);
+  const [loading, setLoading] = useState(!userCache.loaded);
   const router = useRouter();
 
+  const updateState = useCallback(() => {
+    setUser(userCache.user);
+    setRole(userCache.role);
+    setLoading(!userCache.loaded);
+  }, []);
+
   useEffect(() => {
+    userCache.listeners.add(updateState);
+    
+    if (userCache.loaded) {
+      updateState();
+      return () => {
+        userCache.listeners.delete(updateState);
+      };
+    }
+
     let mounted = true;
 
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!mounted) return;
-
-      if (session?.user) {
-        setUser(session.user);
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", session.user.id)
-          .single();
-        if (mounted) setRole(profile?.role || "user");
-      } else {
-        setUser(null);
-        setRole(null);
-      }
-      setLoading(false);
-    };
-
-    checkUser();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (!mounted) return;
-
+    const loadUser = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
         if (session?.user) {
-          setUser(session.user);
+          userCache.user = session.user;
           const { data: profile } = await supabase
             .from("profiles")
             .select("role")
             .eq("id", session.user.id)
             .single();
-          if (mounted) setRole(profile?.role || "user");
+          userCache.role = profile?.role || "user";
         } else {
-          setUser(null);
-          setRole(null);
+          userCache.user = null;
+          userCache.role = null;
         }
-        setLoading(false);
         
-        if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED') {
+        userCache.loaded = true;
+        userCache.listeners.forEach(fn => fn());
+      } catch (error) {
+        userCache.loaded = true;
+        userCache.listeners.forEach(fn => fn());
+      }
+    };
+
+    if (!userCache.loaded) {
+      loadUser();
+    }
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' && session?.user) {
+          userCache.user = session.user;
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", session.user.id)
+            .single();
+          userCache.role = profile?.role || "user";
+          userCache.loaded = true;
+          userCache.listeners.forEach(fn => fn());
+          router.refresh();
+        } else if (event === 'SIGNED_OUT') {
+          userCache.user = null;
+          userCache.role = null;
+          userCache.loaded = true;
+          userCache.listeners.forEach(fn => fn());
           router.refresh();
         }
       }
@@ -72,9 +101,10 @@ export function UserNav({ isMobileMenu = false }: { isMobileMenu?: boolean }) {
 
     return () => {
       mounted = false;
+      userCache.listeners.delete(updateState);
       subscription.unsubscribe();
     };
-  }, [router]);
+  }, [router, updateState]);
 
   if (loading) {
     return <div className="h-10 w-10 rounded-full bg-muted animate-pulse" />;

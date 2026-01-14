@@ -140,151 +140,152 @@ export default function DashboardPage() {
   }
 
     return (
-      <div className="min-h-screen pt-16 pb-8 bg-secondary/10 font-hind-siliguri">
-        <div className="container mx-auto px-4 max-w-5xl">
-            <div className="mb-4 flex flex-col md:flex-row md:items-center justify-between gap-2">
-              <div>
-                <h1 className="text-xl font-black leading-tight">স্বাগতম, {user?.profile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0]}!</h1>
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">আপনার অগ্রগতির ওপর নজর রাখুন</p>
+        <div className="min-h-screen pt-20 pb-12 bg-secondary/10 font-hind-siliguri">
+          <div className="container mx-auto px-4 max-w-6xl">
+              <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-black leading-tight">স্বাগতম, {user?.profile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0]}!</h1>
+                  <p className="text-sm font-bold text-muted-foreground mt-1">আপনার অগ্রগতির ওপর নজর রাখুন</p>
+                </div>
+                <Button asChild size="default" className="h-11 px-6 font-black rounded-xl shadow-md text-sm">
+                  <Link href="/tests">নতুন টেস্ট শুরু করুন</Link>
+                </Button>
               </div>
-              <Button asChild size="sm" className="h-8 px-4 font-black rounded-lg shadow-sm text-[11px]">
-                <Link href="/tests">নতুন টেস্ট শুরু করুন</Link>
-              </Button>
-            </div>
-  
-              <div className="grid lg:grid-cols-3 gap-3">
-                <div className="lg:col-span-2 space-y-3">
-                    {user?.profile?.target_score && (
-                      <Card className="border-primary/20 bg-primary/5 overflow-hidden rounded-lg border shadow-sm">
-                        <CardHeader className="py-1.5 px-3 border-b border-primary/10">
-                          <CardTitle className="flex items-center gap-1.5 text-primary text-[9px] font-black uppercase tracking-tight">
-                            <Target className="h-3 w-3" />
-                            আইইএলটিএস লক্ষ্য
-                          </CardTitle>
+    
+                <div className="grid lg:grid-cols-3 gap-6">
+                  <div className="lg:col-span-2 space-y-6">
+                      {user?.profile?.target_score && (
+                        <Card className="border-primary/20 bg-primary/5 overflow-hidden rounded-2xl border shadow-lg">
+                          <CardHeader className="py-4 px-6 border-b border-primary/10">
+                            <CardTitle className="flex items-center gap-2 text-primary text-sm font-black uppercase tracking-tight">
+                              <Target className="h-4 w-4" />
+                              আইইএলটিএস লক্ষ্য
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="p-6">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                              <div className="space-y-1">
+                                <p className="text-xs text-muted-foreground uppercase font-bold opacity-70">টেস্ট টাইপ</p>
+                                <p className="font-black text-base">{user.profile.test_type || "Academic"}</p>
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-xs text-muted-foreground uppercase font-bold opacity-70">টার্গেট স্কোর</p>
+                                <p className="font-black text-primary text-lg">ব্যান্ড {user.profile.target_score}</p>
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-xs text-muted-foreground uppercase font-bold opacity-70">বর্তমান লেভেল</p>
+                                <p className="font-black text-base">{user.profile.current_level || "নির্ধারণ করা হয়নি"}</p>
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-xs text-muted-foreground uppercase font-bold opacity-70">পরীক্ষার তারিখ</p>
+                                <p className="font-black text-base">{user.profile.exam_date ? new Date(user.profile.exam_date).toLocaleDateString('bn-BD') : "বুক করা হয়নি"}</p>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+    
+                      <Card className="border-border/40 bg-card/40 backdrop-blur-sm rounded-2xl overflow-hidden shadow-lg">
+                        <CardHeader className="py-4 px-6 border-b border-border/40">
+                          <CardTitle className="text-sm font-black uppercase tracking-tight">টেস্ট হিস্ট্রি</CardTitle>
                         </CardHeader>
-                        <CardContent className="p-2 px-3">
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-                            <div className="space-y-0">
-                              <p className="text-[8px] text-muted-foreground uppercase font-black opacity-60 leading-tight mb-0.5">টেস্ট টাইপ</p>
-                              <p className="font-black text-[10px] leading-tight">{user.profile.test_type || "Academic"}</p>
+                        <CardContent className="p-4 px-6">
+                          {results.length === 0 ? (
+                            <div className="text-center py-8">
+                              <h3 className="text-base font-black mb-2">কোনো টেস্ট দেওয়া হয়নি</h3>
+                              <p className="text-sm text-muted-foreground mb-4">এখনই আপনার প্রথম টেস্ট দিন</p>
+                              <Button asChild size="default" variant="outline" className="h-10 px-6 rounded-xl font-black text-sm">
+                                <Link href="/tests">টেস্ট শুরু করুন</Link>
+                              </Button>
                             </div>
-                            <div className="space-y-0">
-                              <p className="text-[8px] text-muted-foreground uppercase font-black opacity-60 leading-tight mb-0.5">টার্গেট স্কোর</p>
-                              <p className="font-black text-primary text-[10px] leading-tight">ব্যান্ড {user.profile.target_score}</p>
+                          ) : (
+                            <div className="space-y-3">
+                              {results.slice(0, 5).map((result) => (
+                                <div key={result.id} className="flex items-center justify-between p-4 rounded-xl border border-border/40 bg-background/30 hover:bg-background/60 transition-all group">
+                                  <div className="flex items-center gap-4">
+                                    <div className="h-12 w-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                                      <Award className="h-6 w-6" />
+                                    </div>
+                                    <div className="min-w-0">
+                                      <h4 className="font-bold text-base truncate max-w-[200px] leading-tight">{result.mock_tests?.title}</h4>
+                                      <p className="text-xs text-muted-foreground font-bold mt-0.5">
+                                        {new Date(result.created_at).toLocaleDateString('bn-BD')}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-4">
+                                    <div className="text-right">
+                                      <div className="text-xl font-black text-primary leading-none">{result.overall_band || "—"}</div>
+                                      <div className="text-[10px] text-muted-foreground font-black uppercase tracking-tight leading-none mt-1">ব্যান্ড</div>
+                                    </div>
+                                    <Button asChild variant="ghost" size="icon" className="h-10 w-10 group-hover:translate-x-1 transition-transform">
+                                      <Link href={`/tests/${result.test_id}/results`}>
+                                        <ChevronRight className="h-5 w-5" />
+                                      </Link>
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
                             </div>
-                            <div className="space-y-0">
-                              <p className="text-[8px] text-muted-foreground uppercase font-black opacity-60 leading-tight mb-0.5">বর্তমান লেভেল</p>
-                              <p className="font-black text-[10px] leading-tight">{user.profile.current_level || "নির্ধারণ করা হয়নি"}</p>
-                            </div>
-                            <div className="space-y-0">
-                              <p className="text-[8px] text-muted-foreground uppercase font-black opacity-60 leading-tight mb-0.5">পরীক্ষার তারিখ</p>
-                              <p className="font-black text-[10px] leading-tight">{user.profile.exam_date ? new Date(user.profile.exam_date).toLocaleDateString('bn-BD') : "বুক করা হয়নি"}</p>
-                            </div>
-                          </div>
+                          )}
                         </CardContent>
                       </Card>
-                    )}
-  
-                    <Card className="border-border/40 bg-card/40 backdrop-blur-sm rounded-lg overflow-hidden shadow-sm">
-                      <CardHeader className="py-1.5 px-3 border-b border-border/40">
-                        <CardTitle className="text-[9px] font-black uppercase tracking-tight">টেস্ট হিস্ট্রি</CardTitle>
+                  </div>
+    
+                  <div className="space-y-6">
+                    <Card className="border-border/40 bg-card/40 backdrop-blur-sm rounded-2xl overflow-hidden shadow-lg">
+                      <CardHeader className="py-4 px-6 border-b border-border/40 bg-secondary/10">
+                        <CardTitle className="text-sm font-black uppercase tracking-tight">আমার টেস্টসমূহ</CardTitle>
                       </CardHeader>
-                      <CardContent className="p-1.5 px-3">
-                        {results.length === 0 ? (
-                          <div className="text-center py-3">
-                            <h3 className="text-[10px] font-black mb-1">কোনো টেস্ট দেওয়া হয়নি</h3>
-                            <Button asChild size="sm" variant="outline" className="h-6 px-3 rounded-md font-black text-[9px]">
-                              <Link href="/tests">টেস্ট শুরু করুন</Link>
-                            </Button>
+                      <CardContent className="p-4 px-6 space-y-3">
+                        {purchases.length === 0 ? (
+                          <div className="text-center py-4">
+                            <p className="text-sm font-bold text-muted-foreground">কোনো টেস্ট কেনা হয়নি</p>
                           </div>
                         ) : (
-                          <div className="space-y-1">
-                            {results.slice(0, 4).map((result) => (
-                              <div key={result.id} className="flex items-center justify-between p-1.5 rounded-md border border-border/40 bg-background/30 hover:bg-background/60 transition-all group">
-                                <div className="flex items-center gap-2">
-                                  <div className="h-6 w-6 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                                    <Award className="h-3.5 w-3.5" />
-                                  </div>
-                                  <div className="min-w-0">
-                                    <h4 className="font-bold text-[10px] truncate max-w-[140px] leading-tight mb-0">{result.mock_tests?.title}</h4>
-                                    <p className="text-[7px] text-muted-foreground font-bold uppercase tracking-tight leading-none">
-                                      {new Date(result.created_at).toLocaleDateString('bn-BD')}
-                                    </p>
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <div className="text-right">
-                                    <div className="text-[11px] font-black text-primary leading-none">{result.overall_band || "—"}</div>
-                                    <div className="text-[6px] text-muted-foreground font-black uppercase tracking-tight leading-none">ব্যান্ড</div>
-                                  </div>
-                                  <Button asChild variant="ghost" size="icon" className="h-5 w-5 group-hover:translate-x-1 transition-transform">
-                                    <Link href={`/tests/${result.test_id}/results`}>
-                                      <ChevronRight className="h-3 w-3" />
-                                    </Link>
-                                  </Button>
-                                </div>
+                          purchases.slice(0, 4).map((purchase) => (
+                            <div key={purchase.id} className="flex items-center justify-between p-4 rounded-xl bg-background/40 border border-border/40">
+                              <div className="min-w-0 flex-1">
+                                <p className="font-black text-sm truncate leading-tight">{purchase.mock_tests?.title}</p>
+                                <p className="text-xs font-bold text-muted-foreground mt-1">
+                                  {purchase.expires_at 
+                                    ? `মেয়াদ: ${new Date(purchase.expires_at).toLocaleDateString('bn-BD')}`
+                                    : `কেনা: ${new Date(purchase.created_at).toLocaleDateString('bn-BD')}`}
+                                </p>
                               </div>
-                            ))}
-                          </div>
+                              <Badge variant="outline" className="ml-2 text-xs px-2 py-0.5 font-black border-green-500/30 bg-green-500/5 text-green-500 rounded-lg">ACTIVE</Badge>
+                            </div>
+                          ))
                         )}
+                        <Button asChild variant="outline" size="default" className="w-full mt-2 h-11 text-sm font-black rounded-xl border-primary/20 hover:bg-primary/5">
+                          <Link href="/tests">সব টেস্ট দেখুন</Link>
+                        </Button>
                       </CardContent>
                     </Card>
+    
+                    <Card className="border-border/40 bg-card/40 backdrop-blur-sm rounded-2xl overflow-hidden shadow-lg">
+                      <CardHeader className="py-4 px-6 border-b border-border/40 bg-secondary/10">
+                        <CardTitle className="text-sm font-black uppercase tracking-tight">রিসোর্স</CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-4 px-6 space-y-3">
+                        <Button asChild className="w-full justify-start h-11 text-sm font-black rounded-xl border-border/40 bg-background/30" variant="outline">
+                          <Link href="/tests?tab=practice">
+                            <FileText className="mr-3 h-4 w-4 text-primary" />
+                            প্র্যাকটিস ম্যাটেরিয়াল
+                          </Link>
+                        </Button>
+                        <Button asChild className="w-full justify-start h-11 text-sm font-black rounded-xl border-border/40 bg-background/30" variant="outline">
+                          <Link href="/settings">
+                            <TrendingUp className="mr-3 h-4 w-4 text-primary" />
+                            প্রোফাইল আপডেট
+                          </Link>
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </div>
                 </div>
-  
-                <div className="space-y-3">
-                  <Card className="border-border/40 bg-card/40 backdrop-blur-sm rounded-lg overflow-hidden shadow-sm">
-                    <CardHeader className="py-1.5 px-3 border-b border-border/40 bg-secondary/10">
-                      <CardTitle className="text-[9px] font-black uppercase tracking-tight">আমার টেস্টসমূহ</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-1.5 px-3 space-y-1">
-                      {purchases.length === 0 ? (
-                        <div className="text-center py-1">
-                          <p className="text-[9px] font-bold text-muted-foreground uppercase">খালি</p>
-                        </div>
-                      ) : (
-                        purchases.slice(0, 3).map((purchase) => (
-                          <div key={purchase.id} className="flex items-center justify-between p-1.5 rounded-md bg-background/40 border border-border/40">
-                            <div className="min-w-0 flex-1">
-                              <p className="font-black text-[10px] truncate leading-tight mb-0">{purchase.mock_tests?.title}</p>
-                              <p className="text-[7px] font-bold text-muted-foreground uppercase tracking-tight leading-none">
-                                {purchase.expires_at 
-                                  ? `মেয়াদ: ${new Date(purchase.expires_at).toLocaleDateString('bn-BD')}`
-                                  : `কেনা: ${new Date(purchase.created_at).toLocaleDateString('bn-BD')}`}
-                              </p>
-                            </div>
-                            <Badge variant="outline" className="ml-1 text-[6px] px-1 py-0 font-black border-green-500/30 bg-green-500/5 text-green-500 rounded-sm">ACTIVE</Badge>
-                          </div>
-                        ))
-                      )}
-                      <Button asChild variant="outline" size="sm" className="w-full mt-1 h-7 text-[9px] font-black rounded-md border-primary/20 hover:bg-primary/5">
-                        <Link href="/tests">টেস্ট দেখুন</Link>
-                      </Button>
-                    </CardContent>
-                  </Card>
-  
-                  <Card className="border-border/40 bg-card/40 backdrop-blur-sm rounded-lg overflow-hidden shadow-sm">
-                    <CardHeader className="py-1.5 px-3 border-b border-border/40 bg-secondary/10">
-                      <CardTitle className="text-[9px] font-black uppercase tracking-tight">রিসোর্স</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-1.5 px-3 space-y-1">
-                      <Button asChild className="w-full justify-start h-7 text-[9px] font-black rounded-md border-border/40 bg-background/30" variant="outline">
-                        <Link href="/tests?tab=practice">
-                          <FileText className="mr-1.5 h-3 w-3 text-primary" />
-                          প্র্যাকটিস ম্যাটেরিয়াল
-                        </Link>
-                      </Button>
-                      <Button asChild className="w-full justify-start h-7 text-[9px] font-black rounded-md border-border/40 bg-background/30" variant="outline">
-                        <Link href="/settings">
-                          <TrendingUp className="mr-1.5 h-3 w-3 text-primary" />
-                          প্রোফাইল আপডেট
-                        </Link>
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
+          </div>
         </div>
-      </div>
-    );
+      );
 
 }

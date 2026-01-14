@@ -49,16 +49,16 @@ export default function LoginPage() {
     }
   };
 
-  const handleOAuthLogin = async (provider: "github" | "google") => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
+    const handleOAuthLogin = async (provider: "github" | "google") => {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+        },
+      });
 
-    if (error) setError(error.message);
-  };
+      if (error) setError(error.message);
+    };
 
   return (
     <div className="container relative min-h-screen flex items-center justify-center py-20 px-4">
